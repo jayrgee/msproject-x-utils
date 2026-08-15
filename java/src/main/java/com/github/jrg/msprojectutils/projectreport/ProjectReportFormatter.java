@@ -123,7 +123,7 @@ final class ProjectReportFormatter {
     private List<Resource> resourcesWithoutPlaceholder(ProjectFile projectFile) {
         List<Resource> resources = new ArrayList<>();
         for (Resource resource : projectFile.getResources()) {
-            if (!isPlaceholderResource(resource)) {
+            if (!Integer.valueOf(0).equals(resource.getID())) {
                 resources.add(resource);
             }
         }
@@ -211,10 +211,6 @@ final class ProjectReportFormatter {
 
     private boolean isProjectSummaryTask(Task task) {
         return Integer.valueOf(0).equals(task.getID());
-    }
-
-    private boolean isPlaceholderResource(Resource resource) {
-        return Integer.valueOf(0).equals(resource.getID());
     }
 
     private int countValues(Iterable<? extends FieldContainer> items, FieldType fieldType) {
