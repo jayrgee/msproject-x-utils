@@ -1,6 +1,6 @@
 # MS Project VB* Utils
 
-Utilities for inspecting Microsoft Project MPP files with [VBScript](https://en.wikipedia.org/wiki/VBScript) and [VBA](https://en.wikipedia.org/wiki/Visual_Basic_for_Applications).
+Utilities for inspecting Microsoft Project MPP files with [VBScript](https://en.wikipedia.org/wiki/VBScript), [VBA](https://en.wikipedia.org/wiki/Visual_Basic_for_Applications), and Java.
 
 ## Report summary
 
@@ -29,6 +29,7 @@ Requires:
 - Access to the target `.mpp` file
 - Windows Script Host for running the VBScript report with `cscript`
 - Microsoft Project VBA access for importing and running the VBA report
+- Java 21 and Maven for running the Java console report
 
 Developed and tested on:
 
@@ -65,6 +66,31 @@ After that, you can run the script without explicitly calling `cscript`:
 ```
 
 The script starts or attaches to Microsoft Project, opens the MPP file, prints the report, then closes the MPP without saving changes.
+
+## Run the Java console report
+
+Use `java/` when you want a console report powered by [MPXJ](https://www.mpxj.org/) 16.7.0 instead of Microsoft Project automation.
+
+Build and test the Java module:
+
+```powershell
+cd java
+mvn verify
+```
+
+Run directly with Maven:
+
+```powershell
+mvn exec:java '-DmppPath=C:\path\to\project.mpp'
+```
+
+Run the shaded console jar:
+
+```powershell
+java -jar .\target\project-report-1.0.0-SNAPSHOT.jar "C:\path\to\project.mpp"
+```
+
+The Java report prints file size, project properties, built-in document properties, custom document properties, and custom field aliases with populated value counts where MPXJ exposes them. Unit tests run with JUnit 5, and `mvn verify` generates a JaCoCo coverage report under `java/target/site/jacoco/`.
 
 ## Run the Immediate Window VBA report
 

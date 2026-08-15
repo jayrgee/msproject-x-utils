@@ -1,0 +1,8 @@
+# Maven build output
+target/
+
+# Java build artifacts
+*.class
+
+# Module-local IDE metadata
+*.iml
