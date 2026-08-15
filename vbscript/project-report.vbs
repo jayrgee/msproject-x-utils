@@ -151,7 +151,7 @@ Sub EnumerateCustomFieldsForScope(ByVal projectApp, ByVal scopeName, ByVal field
             If Not IsEmpty(fieldId) Then
                 customFieldName = CustomFieldNameFor(projectApp, fieldId)
                 If Len(customFieldName) > 0 Then
-                    valueCount = CountCustomFieldValuesForScope(projectApp, fieldId, fieldType)
+                    valueCount = CountCustomFieldValuesForScope(projectApp, fieldId, fieldType, baseFieldName)
 
                     If Not foundAny Then
                         WScript.Echo ""
@@ -174,15 +174,15 @@ Sub EnumerateCustomFieldsForScope(ByVal projectApp, ByVal scopeName, ByVal field
     End If
 End Sub
 
-Function CountCustomFieldValuesForScope(ByVal projectApp, ByVal fieldId, ByVal fieldType)
+Function CountCustomFieldValuesForScope(ByVal projectApp, ByVal fieldId, ByVal fieldType, ByVal baseFieldName)
     On Error Resume Next
     Select Case fieldType
         Case pjTask
-            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(projectApp.ActiveProject.Tasks, fieldId)
+            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(projectApp.ActiveProject.Tasks, fieldId, baseFieldName)
         Case pjResource
-            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(projectApp.ActiveProject.Resources, fieldId)
+            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(projectApp.ActiveProject.Resources, fieldId, baseFieldName)
         Case pjProject
-            CountCustomFieldValuesForScope = CountCustomFieldValueOnItem(projectApp.ActiveProject.ProjectSummaryTask, fieldId)
+            CountCustomFieldValuesForScope = CountCustomFieldValueOnItem(projectApp.ActiveProject.ProjectSummaryTask, fieldId, baseFieldName)
         Case Else
             CountCustomFieldValuesForScope = 0
     End Select
@@ -194,13 +194,13 @@ Function CountCustomFieldValuesForScope(ByVal projectApp, ByVal fieldId, ByVal f
     On Error GoTo 0
 End Function
 
-Function CountCustomFieldValuesInItems(ByVal items, ByVal fieldId)
+Function CountCustomFieldValuesInItems(ByVal items, ByVal fieldId, ByVal baseFieldName)
     Dim item
 
     CountCustomFieldValuesInItems = 0
     On Error Resume Next
     For Each item In items
-        CountCustomFieldValuesInItems = CountCustomFieldValuesInItems + CountCustomFieldValueOnItem(item, fieldId)
+        CountCustomFieldValuesInItems = CountCustomFieldValuesInItems + CountCustomFieldValueOnItem(item, fieldId, baseFieldName)
     Next
 
     If Err.Number <> 0 Then
@@ -210,7 +210,7 @@ Function CountCustomFieldValuesInItems(ByVal items, ByVal fieldId)
     On Error GoTo 0
 End Function
 
-Function CountCustomFieldValueOnItem(ByVal item, ByVal fieldId)
+Function CountCustomFieldValueOnItem(ByVal item, ByVal fieldId, ByVal baseFieldName)
     Dim customFieldValue
 
     CountCustomFieldValueOnItem = 0
@@ -221,13 +221,15 @@ Function CountCustomFieldValueOnItem(ByVal item, ByVal fieldId)
     End If
     On Error GoTo 0
 
-    customFieldValue = CustomFieldValueFor(item, fieldId)
+    customFieldValue = CustomFieldValueFor(item, fieldId, baseFieldName)
     If Len(customFieldValue) > 0 Then
         CountCustomFieldValueOnItem = 1
     End If
 End Function
 
-Function CustomFieldValueFor(ByVal item, ByVal fieldId)
+Function CustomFieldValueFor(ByVal item, ByVal fieldId, ByVal baseFieldName)
+    Dim rawValue
+
     On Error Resume Next
     CustomFieldValueFor = item.GetField(fieldId)
     If Err.Number <> 0 Or IsNull(CustomFieldValueFor) Then
@@ -235,6 +237,21 @@ Function CustomFieldValueFor(ByVal item, ByVal fieldId)
         Err.Clear
     Else
         CustomFieldValueFor = Trim(CStr(CustomFieldValueFor))
+    End If
+    On Error GoTo 0
+
+    If UCase(CustomFieldValueFor) <> "#ERROR" Then
+        Exit Function
+    End If
+
+    rawValue = ""
+    On Error Resume Next
+    Execute "rawValue = item." & Replace(baseFieldName, " ", "")
+    If Err.Number <> 0 Or IsNull(rawValue) Then
+        CustomFieldValueFor = ""
+        Err.Clear
+    Else
+        CustomFieldValueFor = Trim(CStr(rawValue))
     End If
     On Error GoTo 0
 End Function

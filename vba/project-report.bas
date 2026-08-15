@@ -94,7 +94,7 @@ Private Sub EnumerateCustomFieldsForScope(ByVal scopeName As String, ByVal field
             If Not IsEmpty(fieldId) Then
                 customFieldName = CustomFieldNameFor(CLng(fieldId))
                 If Len(customFieldName) > 0 Then
-                    valueCount = CountCustomFieldValuesForScope(CLng(fieldId), fieldType)
+                    valueCount = CountCustomFieldValuesForScope(CLng(fieldId), fieldType, baseFieldName)
 
                     If Not foundAny Then
                         Debug.Print ""
@@ -117,15 +117,15 @@ Private Sub EnumerateCustomFieldsForScope(ByVal scopeName As String, ByVal field
     End If
 End Sub
 
-Private Function CountCustomFieldValuesForScope(ByVal fieldId As Long, ByVal fieldType As Long) As Long
+Private Function CountCustomFieldValuesForScope(ByVal fieldId As Long, ByVal fieldType As Long, ByVal baseFieldName As String) As Long
     On Error Resume Next
     Select Case fieldType
         Case FIELD_TYPE_TASK
-            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(ActiveProject.Tasks, fieldId)
+            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(ActiveProject.Tasks, fieldId, baseFieldName)
         Case FIELD_TYPE_RESOURCE
-            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(ActiveProject.Resources, fieldId)
+            CountCustomFieldValuesForScope = CountCustomFieldValuesInItems(ActiveProject.Resources, fieldId, baseFieldName)
         Case FIELD_TYPE_PROJECT
-            CountCustomFieldValuesForScope = CountCustomFieldValueOnItem(ActiveProject.ProjectSummaryTask, fieldId)
+            CountCustomFieldValuesForScope = CountCustomFieldValueOnItem(ActiveProject.ProjectSummaryTask, fieldId, baseFieldName)
         Case Else
             CountCustomFieldValuesForScope = 0
     End Select
@@ -137,13 +137,13 @@ Private Function CountCustomFieldValuesForScope(ByVal fieldId As Long, ByVal fie
     On Error GoTo 0
 End Function
 
-Private Function CountCustomFieldValuesInItems(ByVal items As Object, ByVal fieldId As Long) As Long
+Private Function CountCustomFieldValuesInItems(ByVal items As Object, ByVal fieldId As Long, ByVal baseFieldName As String) As Long
     Dim item As Object
 
     CountCustomFieldValuesInItems = 0
     On Error Resume Next
     For Each item In items
-        CountCustomFieldValuesInItems = CountCustomFieldValuesInItems + CountCustomFieldValueOnItem(item, fieldId)
+        CountCustomFieldValuesInItems = CountCustomFieldValuesInItems + CountCustomFieldValueOnItem(item, fieldId, baseFieldName)
     Next item
 
     If Err.Number <> 0 Then
@@ -153,7 +153,7 @@ Private Function CountCustomFieldValuesInItems(ByVal items As Object, ByVal fiel
     On Error GoTo 0
 End Function
 
-Private Function CountCustomFieldValueOnItem(ByVal item As Object, ByVal fieldId As Long) As Long
+Private Function CountCustomFieldValueOnItem(ByVal item As Object, ByVal fieldId As Long, ByVal baseFieldName As String) As Long
     Dim customFieldValue As String
 
     CountCustomFieldValueOnItem = 0
@@ -164,13 +164,15 @@ Private Function CountCustomFieldValueOnItem(ByVal item As Object, ByVal fieldId
     End If
     On Error GoTo 0
 
-    customFieldValue = CustomFieldValueFor(item, fieldId)
+    customFieldValue = CustomFieldValueFor(item, fieldId, baseFieldName)
     If Len(customFieldValue) > 0 Then
         CountCustomFieldValueOnItem = 1
     End If
 End Function
 
-Private Function CustomFieldValueFor(ByVal item As Object, ByVal fieldId As Long) As String
+Private Function CustomFieldValueFor(ByVal item As Object, ByVal fieldId As Long, ByVal baseFieldName As String) As String
+    Dim rawValue As Variant
+
     On Error Resume Next
     CustomFieldValueFor = item.GetField(fieldId)
     If Err.Number <> 0 Or IsNull(CustomFieldValueFor) Then
@@ -178,6 +180,21 @@ Private Function CustomFieldValueFor(ByVal item As Object, ByVal fieldId As Long
         Err.Clear
     Else
         CustomFieldValueFor = Trim(CStr(CustomFieldValueFor))
+    End If
+    On Error GoTo 0
+
+    If UCase(CustomFieldValueFor) <> "#ERROR" Then
+        Exit Function
+    End If
+
+    rawValue = ""
+    On Error Resume Next
+    rawValue = CallByName(item, Replace(baseFieldName, " ", ""), VbGet)
+    If Err.Number <> 0 Or IsNull(rawValue) Then
+        CustomFieldValueFor = ""
+        Err.Clear
+    Else
+        CustomFieldValueFor = Trim(CStr(rawValue))
     End If
     On Error GoTo 0
 End Function
