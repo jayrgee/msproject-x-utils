@@ -1,4 +1,6 @@
 Attribute VB_Name = "project_report"
+' Description: Prints project properties, document properties, and custom field names for the active Microsoft Project file.
+' Run: Import this module into Microsoft Project, open the Immediate Window, then run PrintActiveProjectReportToImmediate.
 Option Explicit
 
 Private Const FIELD_TYPE_TASK As Long = 0

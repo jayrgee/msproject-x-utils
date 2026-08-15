@@ -1,3 +1,5 @@
+' Description: Opens an MPP file in Microsoft Project, prints project properties, document properties, and custom field names, then closes without saving.
+' Run: cscript //nologo project-report.vbs "C:\path\to\project.mpp"
 Option Explicit
 
 Const pjDoNotSave = 0
