@@ -1,6 +1,7 @@
 package com.github.jrg.msprojectutils.projectreport;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,10 +11,10 @@ import java.util.function.Function;
 import org.mpxj.CustomField;
 import org.mpxj.FieldContainer;
 import org.mpxj.FieldType;
-import org.mpxj.FieldTypeClass;
 import org.mpxj.ProjectFile;
 import org.mpxj.ProjectProperties;
 import org.mpxj.ResourceField;
+import org.mpxj.Task;
 import org.mpxj.TaskField;
 
 final class ProjectReportFormatter {
@@ -103,9 +104,19 @@ final class ProjectReportFormatter {
         report.append("Custom fields").append(System.lineSeparator());
         report.append("-------------").append(System.lineSeparator());
 
-        appendCustomFieldsForScope(report, "Task", projectFile, name -> TaskField.valueOf(name), projectFile.getTasks());
+        appendCustomFieldsForScope(report, "Task", projectFile, name -> TaskField.valueOf(name), tasksWithoutProjectSummary(projectFile));
         appendCustomFieldsForScope(report, "Resource", projectFile, name -> ResourceField.valueOf(name), projectFile.getResources());
         appendProjectCustomFields(report, projectFile);
+    }
+
+    private List<Task> tasksWithoutProjectSummary(ProjectFile projectFile) {
+        List<Task> tasks = new ArrayList<>();
+        for (Task task : projectFile.getTasks()) {
+            if (!isProjectSummaryTask(task)) {
+                tasks.add(task);
+            }
+        }
+        return tasks;
     }
 
     private void appendCustomFieldsForScope(
@@ -144,28 +155,51 @@ final class ProjectReportFormatter {
     }
 
     private void appendProjectCustomFields(StringBuilder report, ProjectFile projectFile) {
+        Task projectSummaryTask = projectSummaryTask(projectFile);
+        if (projectSummaryTask == null) {
+            appendNoCustomFieldsForScope(report, "Project");
+            return;
+        }
+
         boolean foundAny = false;
-        for (CustomField customField : projectFile.getCustomFields().getCustomFieldsByFieldTypeClass(FieldTypeClass.PROJECT)) {
-            String alias = formatValue(customField.getAlias());
-            if (alias.isEmpty()) {
-                continue;
-            }
+        for (CustomFieldRange range : CUSTOM_FIELD_RANGES) {
+            for (int index = 1; index <= range.count(); index++) {
+                String enumName = range.enumPrefix() + index;
+                FieldType fieldType = TaskField.valueOf(enumName);
+                CustomField customField = projectFile.getCustomFields().get(fieldType);
+                String alias = customField == null ? "" : formatValue(customField.getAlias());
+                if (alias.isEmpty()) {
+                    continue;
+                }
 
-            if (!foundAny) {
-                appendScopeHeading(report, "Project");
-                foundAny = true;
-            }
+                if (!foundAny) {
+                    appendScopeHeading(report, "Project");
+                    foundAny = true;
+                }
 
-            FieldType fieldType = customField.getFieldType();
-            report.append(fieldType.getName()).append(": ")
-                    .append(alias)
-                    .append(" (").append(valueCountLabel(countValues(List.of(projectFile.getProjectProperties()), fieldType))).append(")")
-                    .append(System.lineSeparator());
+                report.append(range.displayPrefix()).append(index).append(": ")
+                        .append(alias)
+                        .append(" (").append(valueCountLabel(countValues(List.of(projectSummaryTask), fieldType))).append(")")
+                        .append(System.lineSeparator());
+            }
         }
 
         if (!foundAny) {
             appendNoCustomFieldsForScope(report, "Project");
         }
+    }
+
+    private Task projectSummaryTask(ProjectFile projectFile) {
+        for (Task task : projectFile.getTasks()) {
+            if (isProjectSummaryTask(task)) {
+                return task;
+            }
+        }
+        return null;
+    }
+
+    private boolean isProjectSummaryTask(Task task) {
+        return Integer.valueOf(0).equals(task.getID());
     }
 
     private int countValues(Iterable<? extends FieldContainer> items, FieldType fieldType) {

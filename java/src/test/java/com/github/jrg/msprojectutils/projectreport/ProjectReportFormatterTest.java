@@ -51,4 +51,26 @@ class ProjectReportFormatterTest {
         assertTrue(report.contains("Flag2: Work Order Executed (1 value)"));
         assertTrue(report.contains("Project custom fields" + System.lineSeparator() + "---------------------" + System.lineSeparator() + "<none>"));
     }
+
+    @Test
+    void usesTaskIdZeroAsProjectSummaryAndExcludesItFromTaskCounts() {
+        ProjectFile projectFile = new ProjectFile();
+        projectFile.getCustomFields().getOrCreate(TaskField.TEXT1).setAlias("PO Description");
+
+        Task projectSummaryTask = projectFile.addTask();
+        projectSummaryTask.setID(0);
+        projectSummaryTask.set(TaskField.TEXT1, "Project-level PO");
+
+        Task task = projectFile.addTask();
+        task.setID(1);
+
+        String report = new ProjectReportFormatter().format(projectFile, Path.of("sample.mpp"));
+
+        assertTrue(report.contains("Task custom fields" + System.lineSeparator()
+                + "------------------" + System.lineSeparator()
+                + "Text1: PO Description (0 values)"));
+        assertTrue(report.contains("Project custom fields" + System.lineSeparator()
+                + "---------------------" + System.lineSeparator()
+                + "Text1: PO Description (1 value)"));
+    }
 }
