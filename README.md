@@ -15,9 +15,9 @@ Both reports output Microsoft Project file details without saving changes to the
 Custom fields are printed in this format:
 
 ```text
-Text11: PO Description
-Number12: Physical Percent Complete
-Flag2: Work Order Executed
+Text1: Custom Task Text
+Number1: Custom Task Number
+Flag1: Custom Task Flag
 ```
 
 ## Prerequisites

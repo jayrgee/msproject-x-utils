@@ -13,6 +13,7 @@ import org.mpxj.FieldContainer;
 import org.mpxj.FieldType;
 import org.mpxj.ProjectFile;
 import org.mpxj.ProjectProperties;
+import org.mpxj.Resource;
 import org.mpxj.ResourceField;
 import org.mpxj.Task;
 import org.mpxj.TaskField;
@@ -105,7 +106,7 @@ final class ProjectReportFormatter {
         report.append("-------------").append(System.lineSeparator());
 
         appendCustomFieldsForScope(report, "Task", projectFile, name -> TaskField.valueOf(name), tasksWithoutProjectSummary(projectFile));
-        appendCustomFieldsForScope(report, "Resource", projectFile, name -> ResourceField.valueOf(name), projectFile.getResources());
+        appendCustomFieldsForScope(report, "Resource", projectFile, name -> ResourceField.valueOf(name), resourcesWithoutPlaceholder(projectFile));
         appendProjectCustomFields(report, projectFile);
     }
 
@@ -117,6 +118,16 @@ final class ProjectReportFormatter {
             }
         }
         return tasks;
+    }
+
+    private List<Resource> resourcesWithoutPlaceholder(ProjectFile projectFile) {
+        List<Resource> resources = new ArrayList<>();
+        for (Resource resource : projectFile.getResources()) {
+            if (!isPlaceholderResource(resource)) {
+                resources.add(resource);
+            }
+        }
+        return resources;
     }
 
     private void appendCustomFieldsForScope(
@@ -200,6 +211,10 @@ final class ProjectReportFormatter {
 
     private boolean isProjectSummaryTask(Task task) {
         return Integer.valueOf(0).equals(task.getID());
+    }
+
+    private boolean isPlaceholderResource(Resource resource) {
+        return Integer.valueOf(0).equals(resource.getID());
     }
 
     private int countValues(Iterable<? extends FieldContainer> items, FieldType fieldType) {
