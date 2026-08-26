@@ -137,6 +137,7 @@ Sub EnumerateCustomFieldsForScope(ByVal projectApp, ByVal scopeName, ByVal field
     Dim baseFieldName
     Dim fieldId
     Dim customFieldName
+    Dim customFieldValue
     Dim valueCount
     Dim foundAny
 
@@ -152,6 +153,10 @@ Sub EnumerateCustomFieldsForScope(ByVal projectApp, ByVal scopeName, ByVal field
                 customFieldName = CustomFieldNameFor(projectApp, fieldId)
                 If Len(customFieldName) > 0 Then
                     valueCount = CountCustomFieldValuesForScope(projectApp, fieldId, fieldType, baseFieldName)
+                    customFieldValue = ""
+                    If fieldType = pjProject Then
+                        customFieldValue = CustomFieldValueFor(projectApp.ActiveProject.ProjectSummaryTask, fieldId, baseFieldName)
+                    End If
 
                     If Not foundAny Then
                         WScript.Echo ""
@@ -160,7 +165,11 @@ Sub EnumerateCustomFieldsForScope(ByVal projectApp, ByVal scopeName, ByVal field
                         foundAny = True
                     End If
 
-                    WScript.Echo baseFieldName & ": " & customFieldName & " (" & ValueCountLabel(valueCount) & ")"
+                    If Len(customFieldValue) > 0 Then
+                        WScript.Echo baseFieldName & ": " & customFieldName & " = " & customFieldValue & " (" & ValueCountLabel(valueCount) & ")"
+                    Else
+                        WScript.Echo baseFieldName & ": " & customFieldName & " (" & ValueCountLabel(valueCount) & ")"
+                    End If
                 End If
             End If
         Next

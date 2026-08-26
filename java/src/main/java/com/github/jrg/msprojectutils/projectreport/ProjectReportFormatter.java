@@ -17,6 +17,7 @@ import org.mpxj.Resource;
 import org.mpxj.ResourceField;
 import org.mpxj.Task;
 import org.mpxj.TaskField;
+import org.mpxj.mpp.CustomFieldValueItem;
 
 final class ProjectReportFormatter {
     private static final List<CustomFieldRange> CUSTOM_FIELD_RANGES = List.of(
@@ -188,8 +189,10 @@ final class ProjectReportFormatter {
                     foundAny = true;
                 }
 
+                String value = formatProjectCustomFieldValue(projectSummaryTask, fieldType, customField);
                 report.append(range.displayPrefix()).append(index).append(": ")
                         .append(alias)
+                    .append(value.isEmpty() ? "" : " = " + value)
                         .append(" (").append(valueCountLabel(countValues(List.of(projectSummaryTask), fieldType))).append(")")
                         .append(System.lineSeparator());
             }
@@ -225,6 +228,27 @@ final class ProjectReportFormatter {
 
     private String valueCountLabel(int valueCount) {
         return valueCount == 1 ? "1 value" : valueCount + " values";
+    }
+
+    private String formatProjectCustomFieldValue(Task projectSummaryTask, FieldType fieldType, CustomField customField) {
+        Object rawValue = projectSummaryTask.get(fieldType);
+        String lookupValue = lookupValue(rawValue, customField);
+        return lookupValue.isEmpty() ? formatValue(rawValue) : lookupValue;
+    }
+
+    private String lookupValue(Object rawValue, CustomField customField) {
+        if (!(rawValue instanceof String value) || value.length() < 2 || value.charAt(0) != 1 || customField == null) {
+            return "";
+        }
+
+        int uniqueID = value.charAt(1);
+        for (CustomFieldValueItem item : customField.getLookupTable()) {
+            if (Integer.valueOf(uniqueID).equals(item.getUniqueID())) {
+                return formatValue(item.getValue());
+            }
+        }
+
+        return "";
     }
 
     private void appendNoCustomFieldsForScope(StringBuilder report, String scopeName) {

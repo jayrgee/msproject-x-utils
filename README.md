@@ -11,6 +11,7 @@ Both reports output Microsoft Project file details without saving changes to the
 - Built-in document properties
 - Custom document properties
 - Custom field names
+- Project custom field values from the project summary task in the Java and VBScript reports
 
 Custom fields are printed in this format:
 
@@ -90,7 +91,7 @@ Run the shaded console jar:
 java -jar .\target\project-report-1.0.0-SNAPSHOT.jar "C:\path\to\project.mpp"
 ```
 
-The Java report prints file size, project properties, built-in document properties, custom document properties, and custom field aliases with populated value counts where MPXJ exposes them. Unit tests run with JUnit 5, and `mvn verify` generates a JaCoCo coverage report under `java/target/site/jacoco/`.
+The Java report prints file size, project properties, built-in document properties, custom document properties, custom field aliases with populated value counts where MPXJ exposes them, and project custom field values read from the project summary task. Unit tests run with JUnit 5, and `mvn verify` generates a JaCoCo coverage report under `java/target/site/jacoco/`.
 
 ## Run the Immediate Window VBA report
 

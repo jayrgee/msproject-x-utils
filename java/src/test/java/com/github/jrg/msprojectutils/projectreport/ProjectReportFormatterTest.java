@@ -10,6 +10,7 @@ import org.mpxj.Resource;
 import org.mpxj.ResourceField;
 import org.mpxj.Task;
 import org.mpxj.TaskField;
+import org.mpxj.mpp.CustomFieldValueItem;
 
 class ProjectReportFormatterTest {
     @Test
@@ -56,10 +57,15 @@ class ProjectReportFormatterTest {
     void usesTaskIdZeroAsProjectSummaryAndExcludesItFromTaskCounts() {
         ProjectFile projectFile = new ProjectFile();
         projectFile.getCustomFields().getOrCreate(TaskField.TEXT1).setAlias("Custom Project Text");
+        projectFile.getCustomFields().getOrCreate(TaskField.TEXT30).setAlias("Capex or Opex");
+        CustomFieldValueItem lookupItem = new CustomFieldValueItem(325);
+        lookupItem.setValue("Unregulated Opex");
+        projectFile.getCustomFields().get(TaskField.TEXT30).getLookupTable().add(lookupItem);
 
         Task projectSummaryTask = projectFile.addTask();
         projectSummaryTask.setID(0);
         projectSummaryTask.set(TaskField.TEXT1, "Project value");
+        projectSummaryTask.set(TaskField.TEXT30, "\u0001" + (char) 325);
 
         Task task = projectFile.addTask();
         task.setID(1);
@@ -71,7 +77,8 @@ class ProjectReportFormatterTest {
                 + "Text1: Custom Project Text (0 values)"));
         assertTrue(report.contains("Project custom fields" + System.lineSeparator()
                 + "---------------------" + System.lineSeparator()
-                + "Text1: Custom Project Text (1 value)"));
+            + "Text1: Custom Project Text = Project value (1 value)"));
+        assertTrue(report.contains("Text30: Capex or Opex = Unregulated Opex (1 value)"));
     }
 
     @Test
