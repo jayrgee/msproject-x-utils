@@ -16,18 +16,18 @@ class ProjectReportFormatterTest {
     @Test
     void formatsProjectPropertiesAndEmptyCustomFieldSections() {
         ProjectFile projectFile = new ProjectFile();
-        projectFile.getProjectProperties().setProjectTitle("Network Voltage Control");
-        projectFile.getProjectProperties().setAuthor("Engineering");
-        projectFile.getProjectProperties().setCompany("Contoso");
-        projectFile.getProjectProperties().setComments("Baseline schedule");
+        projectFile.getProjectProperties().setProjectTitle("Sample Project");
+        projectFile.getProjectProperties().setAuthor("Sample Author");
+        projectFile.getProjectProperties().setCompany("Sample Company");
+        projectFile.getProjectProperties().setComments("Sample comments");
 
         String report = new ProjectReportFormatter().format(projectFile, Path.of("sample.mpp"));
 
         assertTrue(report.contains("Project properties"));
-        assertTrue(report.contains("Title: Network Voltage Control"));
-        assertTrue(report.contains("Author: Engineering"));
-        assertTrue(report.contains("Company: Contoso"));
-        assertTrue(report.contains("Comments: Baseline schedule"));
+        assertTrue(report.contains("Title: Sample Project"));
+        assertTrue(report.contains("Author: Sample Author"));
+        assertTrue(report.contains("Company: Sample Company"));
+        assertTrue(report.contains("Comments: Sample comments"));
         assertTrue(report.contains("Task custom fields" + System.lineSeparator() + "------------------" + System.lineSeparator() + "<none>"));
         assertTrue(report.endsWith("------------------" + System.lineSeparator()));
     }
@@ -57,9 +57,9 @@ class ProjectReportFormatterTest {
     void usesTaskIdZeroAsProjectSummaryAndExcludesItFromTaskCounts() {
         ProjectFile projectFile = new ProjectFile();
         projectFile.getCustomFields().getOrCreate(TaskField.TEXT1).setAlias("Custom Project Text");
-        projectFile.getCustomFields().getOrCreate(TaskField.TEXT30).setAlias("Capex or Opex");
+        projectFile.getCustomFields().getOrCreate(TaskField.TEXT30).setAlias("Custom Project Lookup");
         CustomFieldValueItem lookupItem = new CustomFieldValueItem(325);
-        lookupItem.setValue("Unregulated Opex");
+        lookupItem.setValue("Lookup Option A");
         projectFile.getCustomFields().get(TaskField.TEXT30).getLookupTable().add(lookupItem);
 
         Task projectSummaryTask = projectFile.addTask();
@@ -78,7 +78,24 @@ class ProjectReportFormatterTest {
         assertTrue(report.contains("Project custom fields" + System.lineSeparator()
                 + "---------------------" + System.lineSeparator()
             + "Text1: Custom Project Text = Project value (1 value)"));
-        assertTrue(report.contains("Text30: Capex or Opex = Unregulated Opex (1 value)"));
+        assertTrue(report.contains("Text30: Custom Project Lookup = Lookup Option A (1 value)"));
+    }
+
+    @Test
+    void formatsProjectLookupValueWhenEncodedUniqueIdIsNotPrefixedByControlCharacter() {
+        ProjectFile projectFile = new ProjectFile();
+        projectFile.getCustomFields().getOrCreate(TaskField.TEXT30).setAlias("Custom Project Lookup");
+        CustomFieldValueItem lookupItem = new CustomFieldValueItem(322);
+        lookupItem.setValue("Lookup Option B");
+        projectFile.getCustomFields().get(TaskField.TEXT30).getLookupTable().add(lookupItem);
+
+        Task projectSummaryTask = projectFile.addTask();
+        projectSummaryTask.setID(0);
+        projectSummaryTask.set(TaskField.TEXT30, "\u0301\u0142");
+
+        String report = new ProjectReportFormatter().format(projectFile, Path.of("sample.mpp"));
+
+        assertTrue(report.contains("Text30: Custom Project Lookup = Lookup Option B (1 value)"));
     }
 
     @Test

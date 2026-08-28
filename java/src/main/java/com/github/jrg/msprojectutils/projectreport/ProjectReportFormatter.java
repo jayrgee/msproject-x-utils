@@ -237,14 +237,16 @@ final class ProjectReportFormatter {
     }
 
     private String lookupValue(Object rawValue, CustomField customField) {
-        if (!(rawValue instanceof String value) || value.length() < 2 || value.charAt(0) != 1 || customField == null) {
+        if (!(rawValue instanceof String value) || customField == null || value.isEmpty()) {
             return "";
         }
 
-        int uniqueID = value.charAt(1);
-        for (CustomFieldValueItem item : customField.getLookupTable()) {
-            if (Integer.valueOf(uniqueID).equals(item.getUniqueID())) {
-                return formatValue(item.getValue());
+        for (int index = 0; index < value.length(); index++) {
+            int uniqueID = value.charAt(index);
+            for (CustomFieldValueItem item : customField.getLookupTable()) {
+                if (Integer.valueOf(uniqueID).equals(item.getUniqueID())) {
+                    return formatValue(item.getValue());
+                }
             }
         }
 
