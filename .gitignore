@@ -41,5 +41,7 @@
 
 # IDE metadata
 .idea/
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 *.iml

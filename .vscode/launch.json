@@ -1,0 +1,24 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug Java project-report",
+            "request": "launch",
+            "mainClass": "com.github.jrg.msprojectutils.projectreport.ProjectReportApp",
+            "projectName": "project-report",
+            "cwd": "${workspaceFolder}/java",
+            "args": [
+                "${input:mppPath}"
+            ],
+            "preLaunchTask": "maven: compile project-report"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "mppPath",
+            "type": "promptString",
+            "description": "Path to the Microsoft Project .mpp file"
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "maven: compile project-report",
+            "type": "shell",
+            "command": "mvn",
+            "args": [
+                "-f",
+                "${workspaceFolder}/java/pom.xml",
+                "compile"
+            ],
+            "group": "build",
+            "problemMatcher": "$maven"
+        }
+    ]
+}
