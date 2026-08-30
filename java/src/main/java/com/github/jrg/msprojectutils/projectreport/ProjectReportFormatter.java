@@ -8,12 +8,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import org.mpxj.AssignmentField;
 import org.mpxj.CustomField;
 import org.mpxj.FieldContainer;
 import org.mpxj.FieldType;
 import org.mpxj.ProjectFile;
 import org.mpxj.ProjectProperties;
 import org.mpxj.Resource;
+import org.mpxj.ResourceAssignment;
 import org.mpxj.ResourceField;
 import org.mpxj.Task;
 import org.mpxj.TaskField;
@@ -37,8 +39,40 @@ final class ProjectReportFormatter {
         report.append("info: Project file opened:  ").append(projectPath).append(System.lineSeparator());
         appendProjectProperties(report, projectFile, projectPath);
         appendCustomFields(report, projectFile);
+        appendAssignments(report, projectFile);
         report.append("------------------").append(System.lineSeparator());
         return report.toString();
+    }
+
+    private void appendAssignments(StringBuilder report, ProjectFile projectFile) {
+        report.append(System.lineSeparator());
+        report.append("Assignments").append(System.lineSeparator());
+        report.append("-----------").append(System.lineSeparator());
+        report.append("taskname\tresourcename\tresourcetype\tText10").append(System.lineSeparator());
+
+        boolean foundAny = false;
+        for (ResourceAssignment assignment : projectFile.getResourceAssignments()) {
+            foundAny = true;
+            Resource resource = assignment.getResource();
+            Task task = assignment.getTask();
+
+            report.append(formatValue(task == null ? null : task.getName())).append('\t')
+                    .append(formatValue(resource == null ? null : resource.getName())).append('\t')
+                    .append(formatValue(resource == null ? null : resource.getType())).append('\t')
+                    .append(formatAssignmentCustomText(assignment, task, 10))
+                    .append(System.lineSeparator());
+        }
+
+        if (!foundAny) {
+            report.append("<none>").append(System.lineSeparator());
+        }
+    }
+
+    private String formatAssignmentCustomText(ResourceAssignment assignment, Task task, int textFieldNumber) {
+        AssignmentField assignmentField = AssignmentField.valueOf("TEXT" + textFieldNumber);
+        TaskField taskField = TaskField.valueOf("TEXT" + textFieldNumber);
+        String value = formatValue(assignment.get(assignmentField));
+        return value.isEmpty() && task != null ? formatValue(task.get(taskField)) : value;
     }
 
     private void appendProjectProperties(StringBuilder report, ProjectFile projectFile, Path projectPath) {

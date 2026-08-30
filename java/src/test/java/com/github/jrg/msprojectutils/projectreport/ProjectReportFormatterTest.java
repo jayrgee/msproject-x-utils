@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
+import org.mpxj.AssignmentField;
 import org.mpxj.ProjectFile;
 import org.mpxj.Resource;
+import org.mpxj.ResourceAssignment;
 import org.mpxj.ResourceField;
+import org.mpxj.ResourceType;
 import org.mpxj.Task;
 import org.mpxj.TaskField;
 import org.mpxj.mpp.CustomFieldValueItem;
@@ -51,6 +54,45 @@ class ProjectReportFormatterTest {
         assertTrue(report.contains("Text1: Custom Task Text (1 value)"));
         assertTrue(report.contains("Flag2: Custom Resource Flag (1 value)"));
         assertTrue(report.contains("Project custom fields" + System.lineSeparator() + "---------------------" + System.lineSeparator() + "<none>"));
+    }
+
+    @Test
+    void formatsAssignmentListWithTaskResourceTypeAndAssignmentText10() {
+        ProjectFile projectFile = new ProjectFile();
+        Task task = projectFile.addTask();
+        task.setName("Build interface");
+
+        Resource resource = projectFile.addResource();
+        resource.setName("Alex Rivera");
+        resource.setType(ResourceType.WORK);
+
+        ResourceAssignment assignment = task.addResourceAssignment(resource);
+        assignment.set(AssignmentField.TEXT10, "Design review");
+
+        String report = new ProjectReportFormatter().format(projectFile, Path.of("sample.mpp"));
+
+        assertTrue(report.contains("Assignments" + System.lineSeparator()
+                + "-----------" + System.lineSeparator()
+            + "taskname\tresourcename\tresourcetype\tText10" + System.lineSeparator()
+                + "Build interface\tAlex Rivera\tWORK\tDesign review"));
+    }
+
+    @Test
+    void fallsBackToTaskText10WhenAssignmentText10IsEmpty() {
+        ProjectFile projectFile = new ProjectFile();
+        Task task = projectFile.addTask();
+        task.setName("Build interface");
+        task.set(TaskField.TEXT10, "Task review");
+
+        Resource resource = projectFile.addResource();
+        resource.setName("Alex Rivera");
+        resource.setType(ResourceType.WORK);
+
+        task.addResourceAssignment(resource);
+
+        String report = new ProjectReportFormatter().format(projectFile, Path.of("sample.mpp"));
+
+        assertTrue(report.contains("Build interface\tAlex Rivera\tWORK\tTask review"));
     }
 
     @Test
