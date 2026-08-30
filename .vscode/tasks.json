@@ -12,6 +12,29 @@
             ],
             "group": "build",
             "problemMatcher": "$maven"
+        },
+        {
+            "label": "Debug VBScript (CScript)",
+            "type": "shell",
+            "command": "cscript.exe",
+            "args": [
+                "//x",
+                "//d",
+                "${file}",
+                "${input:mppPath}"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
         }
-    ]
+    ],
+    "inputs": [
+    {
+      "id": "mppPath",
+      "type": "promptString",
+      "description": "Enter the MPP path:"
+    }
+  ]
 }
