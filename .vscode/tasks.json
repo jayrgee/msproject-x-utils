@@ -11,7 +11,17 @@
                 "compile"
             ],
             "group": "build",
-            "problemMatcher": "$maven"
+            "problemMatcher": {
+                "owner": "java",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^\\[ERROR\\] (.*):\\[([0-9]+),([0-9]+)\\] (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
+                }
+            }
         },
         {
             "label": "Debug VBScript (CScript)",
