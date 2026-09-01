@@ -7,7 +7,7 @@
             "command": "mvn",
             "args": [
                 "-f",
-                "${workspaceFolder}/java/pom.xml",
+                "${workspaceFolder}/mpxj/pom.xml",
                 "compile"
             ],
             "group": "build",
