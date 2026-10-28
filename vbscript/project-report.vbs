@@ -1,4 +1,4 @@
-' Description: Opens an MPP file in Microsoft Project, prints project properties, document properties, and custom field names, then closes without saving.
+' Description: Opens an MPP file in Microsoft Project, prints project properties, document properties, custom field names, and assignments, then closes without saving.
 ' Run: cscript //nologo project-report.vbs "C:\path\to\project.mpp"
 Option Explicit
 
@@ -6,6 +6,10 @@ Const pjDoNotSave = 0
 Const pjTask = 0
 Const pjResource = 1
 Const pjProject = 2
+Const pjAssignment = 3
+Const pjResourceTypeWork = 0
+Const pjResourceTypeMaterial = 1
+Const pjResourceTypeCost = 2
 
 Dim mppPath
 Dim projectApp
@@ -61,6 +65,7 @@ Info "MPP file opened:  " & mppPath
 Set projectFile = projectApp.ActiveProject
 EnumerateProjectProperties projectFile
 EnumerateCustomFields projectApp
+EnumerateAssignments projectApp, projectFile
 WScript.Echo "------------------"
 CloseActiveProjectWithoutSaving projectApp
 
@@ -263,6 +268,180 @@ Function CustomFieldValueFor(ByVal item, ByVal fieldId, ByVal baseFieldName)
         CustomFieldValueFor = Trim(CStr(rawValue))
     End If
     On Error GoTo 0
+End Function
+
+Sub EnumerateAssignments(ByVal projectApp, ByVal projectFile)
+    Dim text10FieldId
+    Dim task
+    Dim assignment
+    Dim foundAny
+    Dim currentRow
+
+    WScript.Echo ""
+    WScript.Echo "Assignments"
+    WScript.Echo "-----------"
+    WScript.Echo "taskname" & vbTab & "resourcename" & vbTab & "resourcetype" & vbTab & "Text10"
+
+    text10FieldId = FieldConstantFor(projectApp, "Text10", pjAssignment)
+    foundAny = False
+    currentRow = 0
+
+    On Error Resume Next
+    projectApp.ViewApply "Task Usage"
+    For Each task In projectFile.Tasks
+        If Not task Is Nothing Then
+            currentRow = currentRow + 1
+            For Each assignment In task.Assignments
+                If Not assignment Is Nothing Then
+                    currentRow = currentRow + 1
+                    foundAny = True
+                    WScript.Echo AssignmentTaskName(assignment) & vbTab _
+                        & AssignmentResourceName(assignment) & vbTab _
+                        & AssignmentResourceType(assignment) & vbTab _
+                        & AssignmentCustomTextValue(projectApp, assignment, text10FieldId, currentRow)
+                End If
+            Next
+        End If
+    Next
+
+    If Err.Number <> 0 Then
+        WScript.Echo "<unavailable: " & Err.Description & ">"
+        Err.Clear
+    ElseIf Not foundAny Then
+        WScript.Echo "<none>"
+    End If
+    On Error GoTo 0
+End Sub
+
+Function AssignmentCustomTextValue(ByVal projectApp, ByVal assignment, ByVal textFieldId, ByVal row)
+    Dim textFieldName
+
+    AssignmentCustomTextValue = ""
+
+    If Not IsEmpty(textFieldId) Then
+        On Error Resume Next
+        AssignmentCustomTextValue = assignment.GetField(textFieldId)
+        If Err.Number <> 0 Or IsNull(AssignmentCustomTextValue) Then
+            AssignmentCustomTextValue = ""
+            Err.Clear
+        Else
+            AssignmentCustomTextValue = Trim(CStr(AssignmentCustomTextValue))
+        End If
+        On Error GoTo 0
+    End If
+
+    If Len(AssignmentCustomTextValue) > 0 And UCase(AssignmentCustomTextValue) <> "#ERROR" Then
+        Exit Function
+    End If
+
+    textFieldName = AssignmentBaseTextFieldNameFor(projectApp, textFieldId)
+    If Len(textFieldName) = 0 Then
+        textFieldName = FieldNameFor(projectApp, textFieldId)
+    End If
+    If Len(textFieldName) = 0 Then
+        Exit Function
+    End If
+
+    On Error Resume Next
+    projectApp.SelectTaskField row, textFieldName, False
+    AssignmentCustomTextValue = projectApp.ActiveCell.Text
+    If Err.Number <> 0 Or IsNull(AssignmentCustomTextValue) Then
+        AssignmentCustomTextValue = ""
+        Err.Clear
+    Else
+        AssignmentCustomTextValue = Trim(CStr(AssignmentCustomTextValue))
+    End If
+    On Error GoTo 0
+End Function
+
+Function AssignmentBaseTextFieldNameFor(ByVal projectApp, ByVal textFieldId)
+    Dim index
+    Dim baseFieldName
+    Dim candidateFieldId
+
+    AssignmentBaseTextFieldNameFor = ""
+    If IsEmpty(textFieldId) Then
+        Exit Function
+    End If
+
+    For index = 1 To CustomFieldTypeCount("Text")
+        baseFieldName = "Text" & CStr(index)
+        candidateFieldId = FieldConstantFor(projectApp, baseFieldName, pjAssignment)
+        If Not IsEmpty(candidateFieldId) Then
+            If CLng(candidateFieldId) = CLng(textFieldId) Then
+                AssignmentBaseTextFieldNameFor = baseFieldName
+                Exit Function
+            End If
+        End If
+    Next
+End Function
+
+Function FieldNameFor(ByVal projectApp, ByVal fieldId)
+    FieldNameFor = ""
+    If IsEmpty(fieldId) Then
+        Exit Function
+    End If
+
+    On Error Resume Next
+    FieldNameFor = projectApp.FieldConstantToFieldName(fieldId)
+    If Err.Number <> 0 Or IsNull(FieldNameFor) Then
+        FieldNameFor = ""
+        Err.Clear
+    Else
+        FieldNameFor = Trim(CStr(FieldNameFor))
+    End If
+    On Error GoTo 0
+End Function
+
+Function AssignmentTaskName(ByVal assignment)
+    AssignmentTaskName = ""
+    On Error Resume Next
+    AssignmentTaskName = assignment.TaskName
+    If Err.Number <> 0 Or IsNull(AssignmentTaskName) Then
+        AssignmentTaskName = ""
+        Err.Clear
+    Else
+        AssignmentTaskName = Trim(CStr(AssignmentTaskName))
+    End If
+    On Error GoTo 0
+End Function
+
+Function AssignmentResourceName(ByVal assignment)
+    AssignmentResourceName = ""
+    On Error Resume Next
+    AssignmentResourceName = assignment.ResourceName
+    If Err.Number <> 0 Or IsNull(AssignmentResourceName) Then
+        AssignmentResourceName = ""
+        Err.Clear
+    Else
+        AssignmentResourceName = Trim(CStr(AssignmentResourceName))
+    End If
+    On Error GoTo 0
+End Function
+
+Function AssignmentResourceType(ByVal assignment)
+    Dim resourceType
+
+    AssignmentResourceType = ""
+    On Error Resume Next
+    resourceType = assignment.Resource.Type
+    If Err.Number <> 0 Or IsNull(resourceType) Then
+        Err.Clear
+        On Error GoTo 0
+        Exit Function
+    End If
+    On Error GoTo 0
+
+    Select Case CLng(resourceType)
+        Case pjResourceTypeWork
+            AssignmentResourceType = "WORK"
+        Case pjResourceTypeMaterial
+            AssignmentResourceType = "MATERIAL"
+        Case pjResourceTypeCost
+            AssignmentResourceType = "COST"
+        Case Else
+            AssignmentResourceType = CStr(resourceType)
+    End Select
 End Function
 
 Function ValueCountLabel(ByVal valueCount)

@@ -7,11 +7,44 @@
             "command": "mvn",
             "args": [
                 "-f",
-                "${workspaceFolder}/java/pom.xml",
+                "${workspaceFolder}/mpxj/pom.xml",
                 "compile"
             ],
             "group": "build",
-            "problemMatcher": "$maven"
+            "problemMatcher": {
+                "owner": "java",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^\\[ERROR\\] (.*):\\[([0-9]+),([0-9]+)\\] (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
+                }
+            }
+        },
+        {
+            "label": "Debug VBScript (CScript)",
+            "type": "shell",
+            "command": "cscript.exe",
+            "args": [
+                "//x",
+                "//d",
+                "${file}",
+                "${input:mppPath}"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
         }
-    ]
+    ],
+    "inputs": [
+    {
+      "id": "mppPath",
+      "type": "promptString",
+      "description": "Enter the MPP path:"
+    }
+  ]
 }

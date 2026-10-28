@@ -30,7 +30,7 @@ Requires:
 - Access to the target `.mpp` file
 - Windows Script Host for running the VBScript report with `cscript`
 - Microsoft Project VBA access for importing and running the VBA report
-- Java 21 and Maven for running the Java console report
+- Java 21 and Maven for running the Java console reports
 
 Developed and tested on:
 
@@ -68,14 +68,14 @@ After that, you can run the script without explicitly calling `cscript`:
 
 The script starts or attaches to Microsoft Project, opens the MPP file, prints the report, then closes the MPP without saving changes.
 
-## Run the Java console report
+## Run the MPXJ Java console report
 
-Use `java/` when you want a console report powered by [MPXJ](https://www.mpxj.org/) 16.7.0 instead of Microsoft Project automation.
+Use `mpxj/` when you want a console report powered by [MPXJ](https://www.mpxj.org/) 16.7.0 instead of Microsoft Project automation.
 
-Build and test the Java module:
+Build and test the MPXJ module:
 
 ```powershell
-cd java
+cd mpxj
 mvn verify
 ```
 
@@ -91,7 +91,32 @@ Run the shaded console jar:
 java -jar .\target\project-report-1.0.0-SNAPSHOT.jar "C:\path\to\project.mpp"
 ```
 
-The Java report prints file size, project properties, built-in document properties, custom document properties, custom field aliases with populated value counts where MPXJ exposes them, and project custom field values read from the project summary task. Unit tests run with JUnit 5, and `mvn verify` generates a JaCoCo coverage report under `java/target/site/jacoco/`.
+The MPXJ Java report prints file size, project properties, built-in document properties, custom document properties, custom field aliases with populated value counts where MPXJ exposes them, and project custom field values read from the project summary task. Unit tests run with JUnit 5, and `mvn verify` generates a JaCoCo coverage report under `mpxj/target/site/jacoco/`.
+
+## Run the Aspose.Tasks Java console report
+
+Use `aspose/` when you want the same console report shape powered by [Aspose.Tasks for Java](https://products.aspose.com/tasks/java/). The module uses the `jdk18` Aspose.Tasks artifact classifier from the Aspose Java repository, which works with Java 21.
+
+Build and test the Aspose.Tasks module:
+
+```powershell
+cd aspose
+mvn verify
+```
+
+Run directly with Maven:
+
+```powershell
+mvn exec:java '-DmppPath=C:\path\to\project.mpp'
+```
+
+Run the shaded console jar:
+
+```powershell
+java -jar .\target\project-report-aspose-1.0.0-SNAPSHOT.jar "C:\path\to\project.mpp"
+```
+
+The Aspose.Tasks Java report prints file size, project properties, built-in document properties, custom document properties, task/resource custom field aliases with populated value counts, project custom field values from the root project summary task, and assignments. Without an Aspose license, output may be subject to Aspose evaluation-mode behavior.
 
 ## Run the Immediate Window VBA report
 
